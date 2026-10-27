@@ -1,0 +1,985 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Роадмап Рососмотра</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@600&display=swap">
+<style>
+/* Layout: toolbar on top, one scroll surface below — sticky tree column on the left, calendar + bars on the right */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --surface-2:#f8f9fb; --ink:#18212c; --muted:#5f6b7c; --line:#e0e4ea; --line-2:#eef1f4;
+  --accent:#0d7a70; --accent-ink:#ffffff; --accent-soft:#dff1ee;
+  --wknd:rgba(24,33,44,.035); --today:#e0533f; --sum:#2b3542;
+  --st-backlog:#9aa3b1; --st-progress:#2f6fdf; --st-review:#cf8d12; --st-done:#2a9a5e; --st-blocked:#d2463f;
+  --shadow:0 10px 30px rgba(20,30,45,.14);
+  --c-teal:#13998a; --c-blue:#3a6fe0; --c-violet:#7b5bd6; --c-pink:#d2508e; --c-red:#d8453b; --c-orange:#e0732b; --c-amber:#c99612; --c-green:#3b9a4d; --c-slate:#5d6b7e;
+  --f-display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --left-w:360px; --row-h:38px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11151b; --surface:#171c24; --surface-2:#1b212a; --ink:#e5e9ef; --muted:#909aaa; --line:#2a313c; --line-2:#212831;
+  --accent:#3dbba9; --accent-ink:#0c1a18; --accent-soft:#16312d;
+  --wknd:rgba(255,255,255,.03); --today:#ff7a64; --sum:#c9d1dc;
+  --st-backlog:#6f7988; --st-progress:#5a8ff0; --st-review:#e0a53a; --st-done:#45b97a; --st-blocked:#ee6a5f;
+  --shadow:0 12px 34px rgba(0,0,0,.5); color-scheme:dark; --c-teal:#3cc0ae; --c-blue:#6a98f2; --c-violet:#a28af0; --c-pink:#ec7fb0; --c-red:#f06b61; --c-orange:#f2955a; --c-amber:#e8bd42; --c-green:#5cc06f; --c-slate:#8e9bb0;
+}}
+:root[data-theme="dark"]{
+  --bg:#11151b; --surface:#171c24; --surface-2:#1b212a; --ink:#e5e9ef; --muted:#909aaa; --line:#2a313c; --line-2:#212831;
+  --accent:#3dbba9; --accent-ink:#0c1a18; --accent-soft:#16312d;
+  --wknd:rgba(255,255,255,.03); --today:#ff7a64; --sum:#c9d1dc;
+  --st-backlog:#6f7988; --st-progress:#5a8ff0; --st-review:#e0a53a; --st-done:#45b97a; --st-blocked:#ee6a5f;
+  --shadow:0 12px 34px rgba(0,0,0,.5); color-scheme:dark; --c-teal:#3cc0ae; --c-blue:#6a98f2; --c-violet:#a28af0; --c-pink:#ec7fb0; --c-red:#f06b61; --c-orange:#f2955a; --c-amber:#e8bd42; --c-green:#5cc06f; --c-slate:#8e9bb0;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;display:flex;flex-direction:column;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Toolbar */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-block:12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line);background:var(--surface)}
+.brand{display:flex;flex-direction:column;gap:2px;margin-right:auto;min-width:0}
+.brand h1{font-family:var(--f-display);font-size:17px;font-weight:600;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.brand small{color:var(--muted);font-size:12px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface-2)}
+.seg button{border:0;background:none;padding:6px 11px;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:inset 0 0 0 1px var(--line)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 11px;font-size:13px;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.danger{color:var(--st-blocked)}
+.btn.danger.armed{background:var(--st-blocked);border-color:var(--st-blocked);color:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));font-size:12px;color:var(--muted);border-bottom:1px solid var(--line);background:var(--surface)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:18px;height:8px;border-radius:3px;display:inline-block}
+.notice{padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));font-size:13px;background:var(--accent-soft);color:var(--ink);border-bottom:1px solid var(--line)}
+
+/* Board */
+.scroller{flex:1;overflow:auto;position:relative;overscroll-behavior:contain}
+.board{position:relative;min-height:100%}
+.hdr{position:sticky;top:0;z-index:6;display:flex;background:var(--surface);border-bottom:1px solid var(--line)}
+.hdr-left{position:sticky;left:0;z-index:7;flex:0 0 var(--left-w);width:var(--left-w);background:var(--surface);border-right:1px solid var(--line);display:flex;align-items:flex-end;padding:0 12px 8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.hdr-left{position:sticky}
+.split{position:absolute;top:0;bottom:0;right:-6px;width:12px;cursor:col-resize;z-index:8;touch-action:none;display:flex;justify-content:center;border:0;background:none;padding:0}
+.split::before{content:"";width:2px;height:100%;background:transparent;transition:background .12s}
+.split::after{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:6px;height:22px;border-radius:3px;border:1px solid var(--line);background:var(--surface)}
+.split:hover::before,.split.on::before,.split:focus-visible::before{background:var(--accent)}
+.split:hover::after,.split.on::after{border-color:var(--accent)}
+body.resizing,body.resizing *{cursor:col-resize!important;user-select:none}
+.row.k-stage .kind{color:var(--st-review);border-color:color-mix(in srgb,var(--st-review) 50%,transparent)}
+.row.k-task .kind{color:var(--muted);border-color:var(--line)}
+.cal{position:relative;height:78px;flex:none}
+.pick{flex:none;width:18px;height:18px;border:1.5px solid var(--line);border-radius:5px;background:var(--surface);padding:0;display:grid;place-items:center;color:transparent}
+.pick:hover{border-color:var(--accent)}
+.pick[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.row.picked .cl{background:var(--accent-soft)}
+.row.picked .ct{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.row.clip .name{text-decoration:underline dashed color-mix(in srgb,var(--accent) 60%,transparent);text-underline-offset:4px}
+.row.drop .cl{box-shadow:inset 0 0 0 2px var(--accent)}
+.menu{position:fixed;z-index:35;min-width:230px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:5px;display:flex;flex-direction:column}
+.menu button{border:0;background:none;text-align:left;padding:8px 10px;border-radius:6px;font-size:13px;display:flex;justify-content:space-between;gap:16px}
+.menu button:hover,.menu button:focus-visible{background:var(--surface-2)}
+.menu button:disabled{color:var(--muted);cursor:default;background:none}
+.menu .mh{font-size:11px;color:var(--muted);padding:6px 10px 4px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.menu kbd{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.selbar{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:15;background:var(--ink);color:var(--surface);border-radius:10px;padding:6px 6px 6px 14px;display:flex;align-items:center;gap:8px;font-size:13px;box-shadow:var(--shadow);max-width:calc(100% - 32px);flex-wrap:wrap}
+.selbar button{border:0;border-radius:7px;padding:6px 10px;font-size:13px;background:color-mix(in srgb,var(--surface) 16%,transparent);color:var(--surface)}
+.selbar button:hover{background:color-mix(in srgb,var(--surface) 26%,transparent)}
+.selbar .hint2{opacity:.7;font-size:12px}
+.selbar button.del{background:color-mix(in srgb,var(--st-blocked) 70%,transparent)}
+.selbar button.del.armed{background:var(--st-blocked);color:#fff;font-weight:600}
+.selbar .sw{flex-basis:100%;padding:4px 0 2px;gap:6px}
+.selbar .sw button{width:24px;height:24px;border-radius:6px;padding:0;background:var(--swc);border:2px solid transparent}
+.selbar .sw button.auto{background:linear-gradient(135deg,var(--st-progress) 0 33%,var(--st-review) 33% 66%,var(--st-done) 66%)}
+.selbar .sw button:hover{border-color:var(--surface)}
+.menu button.danger-m{color:var(--st-blocked)}
+.menu button.danger-m.armed{background:var(--st-blocked);color:#fff}
+.cal .c{position:absolute;display:flex;align-items:center;font-family:var(--f-mono);white-space:nowrap;overflow:hidden;border-left:1px solid var(--line-2)}
+.cal .top-c{top:26px;height:26px;border-top:1px solid var(--line-2);padding-left:8px;font-size:12px;font-weight:500;color:var(--ink);font-family:var(--f-body)}
+.cal .bot-c{top:52px;height:26px;justify-content:center;font-size:11px;color:var(--muted);border-top:1px solid var(--line-2)}
+.cal .bot-c.we{color:var(--st-blocked);opacity:.75}
+.cal .bot-c.now{color:var(--today);font-weight:600}
+.body{position:relative}
+.bg{position:absolute;top:0;bottom:0;pointer-events:none;z-index:0}
+.bg .we{position:absolute;top:0;bottom:0;background:var(--wknd)}
+.bg .ml{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.bg .td{position:absolute;top:0;bottom:0;width:2px;background:var(--today);opacity:.85}
+.row{display:flex;height:var(--row-h);position:relative;z-index:1}
+.row:hover .cl,.row.sel .cl{background:var(--surface-2)}
+.row:hover .ct{background:color-mix(in srgb,var(--accent) 4%,transparent)}
+.cl{position:sticky;left:0;z-index:3;flex:0 0 var(--left-w);width:var(--left-w);background:var(--surface);border-right:1px solid var(--line);border-bottom:1px solid var(--line-2);display:flex;align-items:center;gap:6px;padding-right:8px;min-width:0}
+.ct{position:relative;flex:none;border-bottom:1px solid var(--line-2)}
+.caret{flex:none;width:22px;height:22px;border:0;background:none;border-radius:5px;color:var(--muted);display:grid;place-items:center;padding:0}
+.caret:hover{background:var(--line-2);color:var(--ink)}
+.caret svg{transition:transform .15s}
+.caret[aria-expanded="true"] svg{transform:rotate(90deg)}
+.spacer{flex:none;width:22px}
+.kind{flex:none;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.t-epic .kind{background:var(--sum);color:var(--surface);border-color:var(--sum)}
+.t-story .kind{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.name{flex:1;min-width:0;border:0;background:none;text-align:left;padding:4px 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-radius:4px}
+.t-epic .name{font-weight:650;font-weight:600}
+.t-task .name{color:var(--muted)}
+.name:hover{color:var(--accent)}
+.dates{flex:none;font-family:var(--f-mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.own{flex:none;font-size:11px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--line-2);color:var(--muted);font-weight:600}
+.add{flex:none;width:24px;height:24px;border:1px dashed var(--line);border-radius:6px;background:none;color:var(--muted);padding:0;line-height:1;font-size:16px;opacity:0;transition:opacity .12s}
+.row:hover .add,.row:focus-within .add,.add:focus-visible{opacity:1}
+@media (hover:none){.add{opacity:1}}
+.add:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Bars */
+.bar{position:absolute;top:50%;transform:translateY(-50%);border-radius:6px;background:var(--st);touch-action:none;cursor:grab;user-select:none;overflow:visible;min-width:6px}
+.bar:active{cursor:grabbing}
+.bar .pg{position:absolute;left:0;top:0;bottom:0;border-radius:6px 0 0 6px;background:rgba(0,0,0,.22)}
+.bar .pg.full{border-radius:6px}
+.bar.leaf.t-story{height:20px}
+.bar.leaf.t-epic{height:22px}
+.bar.leaf.t-task{height:14px;border-radius:4px}
+.bar.leaf.t-task .pg{border-radius:4px 0 0 4px}
+.bar .h{position:absolute;top:-4px;bottom:-4px;width:10px;cursor:ew-resize}
+.bar .h.l{left:-5px}.bar .h.r{right:-5px}
+.bar .h::after{content:"";position:absolute;top:50%;left:50%;width:3px;height:10px;transform:translate(-50%,-50%);border-radius:2px;background:var(--surface);opacity:0;transition:opacity .1s}
+.bar:hover .h::after{opacity:.9}
+.bar.sum{--sumc:var(--sum);height:8px;border-radius:2px;background:var(--sumc);cursor:grab}
+.bar.sum::before,.bar.sum::after{content:"";position:absolute;top:0;width:0;height:0;border-top:8px solid var(--sumc)}
+.bar.sum::before{left:0;border-right:7px solid transparent;transform:translateY(7px)}
+.bar.sum::after{right:0;border-left:7px solid transparent;transform:translateY(7px)}
+.bar.sum .pg{background:var(--accent);border-radius:2px 0 0 2px;opacity:.9}
+.bar.sum.t-story{height:6px;opacity:.8}
+.bar.sum.t-story::before,.bar.sum.t-story::after{border-top-width:6px;transform:translateY(5px)}
+.bl{position:absolute;top:50%;transform:translateY(-50%);font-size:12px;white-space:nowrap;color:var(--muted);pointer-events:none;padding-left:8px}
+.t-epic .bl{color:var(--ink);font-weight:600}
+.st-backlog{--st:var(--st-backlog)}.st-progress{--st:var(--st-progress)}.st-review{--st:var(--st-review)}.st-done{--st:var(--st-done)}.st-blocked{--st:var(--st-blocked)}
+.c-teal{--st:var(--c-teal);--sumc:var(--c-teal)}.c-blue{--st:var(--c-blue);--sumc:var(--c-blue)}.c-violet{--st:var(--c-violet);--sumc:var(--c-violet)}.c-pink{--st:var(--c-pink);--sumc:var(--c-pink)}.c-red{--st:var(--c-red);--sumc:var(--c-red)}.c-orange{--st:var(--c-orange);--sumc:var(--c-orange)}.c-amber{--st:var(--c-amber);--sumc:var(--c-amber)}.c-green{--st:var(--c-green);--sumc:var(--c-green)}.c-slate{--st:var(--c-slate);--sumc:var(--c-slate)}
+.bar.grp{outline:2px solid var(--accent);outline-offset:2px}
+.sw{display:flex;flex-wrap:wrap;gap:6px}
+.sw button{width:26px;height:26px;border-radius:7px;border:2px solid transparent;padding:0;background:var(--swc);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.sw button.auto{background:linear-gradient(135deg,var(--st-progress) 0 33%,var(--st-review) 33% 66%,var(--st-done) 66%);}
+.sw button[aria-pressed="true"]{border-color:var(--ink)}
+.menu .sw{padding:4px 10px 8px}
+.menu .sw button{width:22px;height:22px;border-radius:6px}
+.hdr-left{flex-direction:column;align-items:flex-start;justify-content:space-between;padding-top:4px}
+.ms-add{border:1px dashed var(--line);background:none;border-radius:6px;padding:2px 8px;font-size:12px;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:500;height:20px;display:inline-flex;align-items:center}
+.ms-add:hover{border-color:var(--c-violet);color:var(--c-violet)}
+.ms-row{position:absolute;left:0;right:0;top:0;height:26px;cursor:copy}
+.msf{position:absolute;top:3px;height:20px;display:flex;align-items:center;gap:5px;cursor:grab;touch-action:none;user-select:none;z-index:2;transform:translateX(-6px);max-width:220px}
+.msf:active{cursor:grabbing}
+.msf i{flex:none;width:11px;height:11px;transform:rotate(45deg);background:var(--msc);border-radius:2px;box-shadow:0 0 0 2px var(--surface)}
+.msf b{font-weight:600;font-size:11.5px;color:var(--msc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--surface);padding-right:4px;border-radius:3px}
+.msf::after{content:"";position:absolute;left:5px;top:17px;height:58px;width:1.5px;background:var(--msc);opacity:.7;pointer-events:none}
+.bg .msl{position:absolute;top:0;bottom:0;width:1.5px;background:var(--msc);opacity:.6}
+.pop{position:fixed;z-index:36;width:280px;max-width:calc(100% - 32px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:14px;display:flex;flex-direction:column;gap:12px}
+.pop h3{margin:0;font-size:13px;font-weight:600;color:var(--muted)}
+.pop .row2{display:flex;gap:8px;flex-wrap:wrap}
+.cl{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.row.lifted{opacity:.4}
+body.ldrag,body.ldrag *{cursor:grabbing!important;user-select:none}
+.dropline{position:fixed;z-index:25;height:2px;background:var(--accent);border-radius:2px;pointer-events:none}
+.dropline::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;border:2px solid var(--accent);background:var(--surface)}
+.ghost{position:fixed;z-index:31;pointer-events:none;background:var(--surface);border:1px solid var(--accent);box-shadow:var(--shadow);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:rotate(-1.5deg)}
+.ghost small{font-weight:400;color:var(--muted);margin-left:6px}
+.tip{position:fixed;z-index:30;pointer-events:none;background:var(--ink);color:var(--surface);font-family:var(--f-mono);font-size:12px;padding:5px 8px;border-radius:6px;white-space:nowrap}
+
+.empty{position:sticky;left:0;padding:48px 24px;max-width:520px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.empty h2{font-family:var(--f-display);font-size:18px;margin:0}
+.empty p{margin:0;color:var(--muted);line-height:1.5}
+
+/* Editor */
+.scrim{position:fixed;inset:0;background:rgba(10,15,22,.28);z-index:20}
+.ed{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);z-index:21;box-shadow:var(--shadow);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+.ed form{display:flex;flex-direction:column;height:100%;min-height:0}
+.ed-h{padding:18px 20px 12px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.ed-h .crumb{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ed-h .kindline{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.ed-b{flex:1;overflow:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.f{display:flex;flex-direction:column;gap:6px;min-width:0}
+.f label,.f .lb{font-size:12px;font-weight:600;color:var(--muted)}
+.f input,.f select,.f textarea{border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:8px 10px;width:100%;box-sizing:border-box}
+.f textarea{resize:vertical;min-height:70px;line-height:1.45}
+#ed-title{font-size:16px;font-weight:600;min-height:52px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hint{font-size:12px;color:var(--muted);line-height:1.4}
+.rng{display:flex;align-items:center;gap:10px}
+.rng input{flex:1;padding:0;accent-color:var(--accent);background:none;border:0}
+.rng output{font-family:var(--f-mono);font-size:12px;width:40px;text-align:right}
+.linkrow{display:flex;gap:8px}
+.linkrow a{align-self:center;font-size:13px;color:var(--accent);white-space:nowrap}
+.ed-f{padding:12px 20px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap}
+.ed-f .grow{flex:1}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 14px;border-radius:8px;font-size:13px;z-index:40;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+
+@media (max-width:720px){
+  :root{--left-w:190px;--row-h:40px}
+  .dates,.own{display:none}
+  .kind{display:none}
+  .brand small{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="brand">
+    <h1>Роадмап Рососмотра</h1>
+    <small id="meta">Эпики → юзер-стори → задачи</small>
+  </div>
+  <div class="tools">
+    <div class="seg" role="group" aria-label="Деления календаря">
+      <button type="button" data-scale="day" aria-pressed="false">По дням</button>
+      <button type="button" data-scale="week" aria-pressed="true">По неделям</button>
+      <button type="button" data-scale="month" aria-pressed="false">По месяцам</button>
+    </div>
+    <div class="seg" role="group" aria-label="Масштаб">
+      <button type="button" data-zoom="-1" aria-label="Уменьшить масштаб" title="Уменьшить">−</button>
+      <button type="button" data-zoom="0" title="Масштаб по умолчанию для делений" id="zoomv">100%</button>
+      <button type="button" data-zoom="1" aria-label="Увеличить масштаб" title="Увеличить">+</button>
+    </div>
+    <button type="button" class="btn" id="b-today">Сегодня</button>
+    <button type="button" class="btn" id="b-fold">Свернуть всё</button>
+    <button type="button" class="btn" id="b-export">Экспорт</button>
+    <button type="button" class="btn" id="b-import">Импорт</button>
+    <input type="file" id="f-import" accept="application/json,.json" hidden>
+    <button type="button" class="btn primary" id="b-epic">+ Эпик</button>
+  </div>
+</header>
+<div class="legend" id="legend"></div>
+<div class="notice" id="notice" hidden></div>
+<div class="scroller" id="scroller"><div class="board" id="board"></div></div>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="ed" id="ed" hidden aria-label="Карточка элемента"></aside>
+<div class="tip" id="tip" hidden></div>
+<div class="toast" id="toast" hidden></div>
+<div class="menu" id="menu" role="menu" hidden></div>
+<div class="pop" id="mspop" role="dialog" aria-label="Майлстоун" hidden></div>
+<div class="selbar" id="selbar" hidden></div>
+
+<script>
+(function(){
+const DAY = 864e5;
+const STATUSES = [
+  ["backlog","Бэклог"],["progress","В работе"],["review","На тесте"],["done","Готово"],["blocked","Блокер"]
+];
+const KIND = {epic:"Эпик", story:"Стори", task:"Задача"};
+const COLORS = [["teal","Бирюзовый"],["blue","Синий"],["violet","Фиолетовый"],["pink","Розовый"],["red","Красный"],["orange","Оранжевый"],["amber","Жёлтый"],["green","Зелёный"],["slate","Серый"]];
+const colorOk = c => COLORS.some(x=>x[0]===c);
+const swatches = (cur, attr) => `<button type="button" class="auto" ${attr}="" aria-pressed="${!cur}" title="По статусу" aria-label="По статусу"></button>` + COLORS.map(([k,l])=>`<button type="button" ${attr}="${k}" aria-pressed="${cur===k}" title="${l}" aria-label="${l}" style="--swc:var(--c-${k})"></button>`).join("");
+const LABELS = [["story","Стори"],["stage","Этап"],["task","Задача"]];
+const kindOf = it => it.type==="story" ? ((LABELS.find(l=>l[0]===it.label)||LABELS[0])[1]) : KIND[it.type];
+const kindKey = it => it.type==="story" ? (it.label||"story") : it.type;
+const CHILD = {epic:"story", story:"task"};
+const SCALES = {day:34, week:14, month:4.5};
+const MONTHS = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+const MONTHS_S = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+
+const S = {sbColor:false, ms:new Map(), mcol:null, sel:new Set(), clip:[], lastPick:null, items:new Map(), scale:"week", dw:14, leftW:null, collapsed:new Set(), col:null, mode:"loading", drag:null, pending:false, range:null, scrolledToday:false, editId:null, draft:null, downloads:null};
+
+const $ = id => document.getElementById(id);
+const scroller = $("scroller"), board = $("board");
+
+function ls(k, v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){ return null; } }
+try{ const c = JSON.parse(ls("gantt.collapsed")||"[]"); c.forEach(x=>S.collapsed.add(x)); }catch(e){}
+const sc = ls("gantt.scale"); if(sc && SCALES[sc]) S.scale = sc;
+S.dw = SCALES[S.scale]; { const z = parseFloat(ls("gantt.dw")); if(z>=1.5 && z<=80) S.dw = z; }
+{ const lw = parseFloat(ls("gantt.leftw")); if(lw>=140 && lw<=1200) { S.leftW = lw; document.documentElement.style.setProperty("--left-w", lw+"px"); } }
+
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dn = s => { const [y,m,d] = String(s).split("-").map(Number); return Math.round(Date.UTC(y,m-1,d)/DAY); };
+const ds = n => new Date(n*DAY).toISOString().slice(0,10);
+const todayN = () => { const t = new Date(); return Math.round(Date.UTC(t.getFullYear(),t.getMonth(),t.getDate())/DAY); };
+const dow = n => (new Date(n*DAY).getUTCDay()+6)%7; // 0 = Mon
+const short = n => { const d = new Date(n*DAY); return String(d.getUTCDate()).padStart(2,"0")+"."+String(d.getUTCMonth()+1).padStart(2,"0"); };
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "i"+Date.now().toString(36)+Math.random().toString(36).slice(2,8));
+const isoWeek = n => { const d = new Date(n*DAY); const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()+3-((d.getUTCDay()+6)%7))); const w1 = new Date(Date.UTC(t.getUTCFullYear(),0,4)); return 1+Math.round(((t-w1)/DAY - 3 + ((w1.getUTCDay()+6)%7))/7); };
+const initials = s => String(s||"").trim().split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase();
+
+function toast(msg){ const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(()=>t.hidden=true, 3200); }
+
+/* ---------- tree ---------- */
+function kids(pid){
+  const out = []; S.items.forEach(it=>{ if((it.parent||null)===(pid||null)) out.push(it); });
+  return out.sort((a,b)=>(a.order||0)-(b.order||0) || String(a.start).localeCompare(String(b.start)));
+}
+function hasKids(id){ for(const it of S.items.values()) if(it.parent===id) return true; return false; }
+function span(it){
+  const k = kids(it.id);
+  if(!k.length){ const s = dn(it.start), e = dn(it.end); return {s, e:Math.max(s,e), p:Math.max(0,Math.min(100,+it.progress||0)), derived:false}; }
+  let s = Infinity, e = -Infinity, w = 0, pw = 0;
+  k.forEach(c=>{ const sp = span(c); s = Math.min(s, sp.s); e = Math.max(e, sp.e); const len = sp.e-sp.s+1; w += len; pw += len*sp.p; });
+  return {s, e, p: w ? Math.round(pw/w) : 0, derived:true};
+}
+function descendants(id){ const out = []; (function walk(p){ kids(p).forEach(c=>{ out.push(c); walk(c.id); }); })(id); return out; }
+function flatten(){
+  const rows = [];
+  (function walk(pid, depth){ kids(pid).forEach(it=>{ rows.push({it, depth}); if(!S.collapsed.has(it.id)) walk(it.id, depth+1); }); })(null, 0);
+  return rows;
+}
+
+/* ---------- render ---------- */
+function computeRange(){
+  const t = todayN(); let lo = t-21, hi = t+150;
+  S.items.forEach(it=>{ const s = dn(it.start), e = dn(it.end); if(isFinite(s)) lo = Math.min(lo, s-14); if(isFinite(e)) hi = Math.max(hi, e+45); });
+  S.ms.forEach(m=>{ const d = dn(m.date); if(isFinite(d)){ lo = Math.min(lo, d-14); hi = Math.max(hi, d+30); } });
+  lo -= dow(lo); // start on Monday
+  if(S.scale==="month"){ const d = new Date(lo*DAY); lo = Math.round(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)/DAY); }
+  return {lo, hi, days: hi-lo+1};
+}
+
+function renderLegend(){
+  $("legend").innerHTML = STATUSES.map(([k,l])=>`<span><i style="background:var(--st-${k})"></i>${l}</span>`).join("")
+    + `<span><i style="background:var(--sum);height:5px"></i>Сводная полоса: сроки по вложенным</span>`;
+}
+
+function render(){
+  if(S.drag || S.ld){ S.pending = true; return; }
+  const dw = S.dw;
+  const R = S.range = computeRange();
+  const W = Math.ceil(R.days*dw);
+  const x = n => (n-R.lo)*dw;
+  const t = todayN();
+
+  document.querySelectorAll("[data-scale]").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.scale===S.scale)));
+  $("zoomv").textContent = Math.round(S.dw/SCALES[S.scale]*100)+"%";
+  const total = S.items.size;
+  $("meta").textContent = total ? `${count("epic")} эп. · ${count("story")} стори · ${count("task")} задач` : "Эпики → юзер-стори → задачи";
+
+  // calendar
+  let top = "", bot = "", bg = "";
+  if(S.scale==="month"){
+    let y = new Date(R.lo*DAY).getUTCFullYear(); const yEnd = new Date(R.hi*DAY).getUTCFullYear();
+    for(; y<=yEnd; y++){ const a = Math.max(R.lo, Math.round(Date.UTC(y,0,1)/DAY)), b = Math.min(R.hi+1, Math.round(Date.UTC(y+1,0,1)/DAY)); if(b>a) top += `<div class="c top-c" style="left:${x(a)}px;width:${(b-a)*dw}px">${y}</div>`; }
+  }
+  // months
+  { let d = new Date(R.lo*DAY); let m = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)/DAY;
+    while(m<=R.hi){ const md = new Date(m*DAY); const next = Math.round(Date.UTC(md.getUTCFullYear(), md.getUTCMonth()+1, 1)/DAY);
+      const a = Math.max(R.lo, Math.round(m)), b = Math.min(R.hi+1, next);
+      const mw = (b-a)*dw;
+      if(S.scale==="month") bot += `<div class="c bot-c" style="left:${x(a)}px;width:${mw}px">${mw>=30?MONTHS_S[md.getUTCMonth()]:""}</div>`;
+      else top += `<div class="c top-c" style="left:${x(a)}px;width:${mw}px" title="${MONTHS[md.getUTCMonth()]} ${md.getUTCFullYear()}">${mw>=110?MONTHS[md.getUTCMonth()]+" "+md.getUTCFullYear():mw>=44?MONTHS_S[md.getUTCMonth()]+" "+String(md.getUTCFullYear()).slice(2):""}</div>`;
+      if(a>R.lo) bg += `<div class="ml" style="left:${x(a)}px"></div>`;
+      m = next; }
+  }
+  if(S.scale==="day"){
+    for(let n=R.lo; n<=R.hi; n++){ const we = dow(n)>=5; bot += `<div class="c bot-c${we?" we":""}${n===t?" now":""}" style="left:${x(n)}px;width:${dw}px" title="${short(n)}">${dw>=16?new Date(n*DAY).getUTCDate():""}</div>`; if(we && dow(n)===5) bg += `<div class="we" style="left:${x(n)}px;width:${dw*2}px"></div>`; }
+  } else if(S.scale==="week"){
+    for(let n=R.lo; n<=R.hi; n+=7){ const now = t>=n && t<n+7; bot += `<div class="c bot-c${now?" now":""}" style="left:${x(n)}px;width:${7*dw}px" title="Неделя ${isoWeek(n)} · с ${short(n)}">${7*dw>=40?short(n):7*dw>=20?isoWeek(n):""}</div>`; bg += `<div class="we" style="left:${x(n+5)}px;width:${dw*2}px"></div>`; }
+  }
+  let msf = "";
+  [...S.ms.values()].sort((a,b)=>String(a.date).localeCompare(String(b.date))).forEach(m=>{
+    const d = dn(m.date); if(!isFinite(d)) return; const c = colorOk(m.color) ? m.color : "violet"; const mx = x(d)+dw/2;
+    bg += `<div class="msl" data-ms="${m.id}" style="left:${mx-0.75}px;--msc:var(--c-${c})"></div>`;
+    msf += `<div class="msf" data-ms="${m.id}" style="left:${mx}px;--msc:var(--c-${c})" title="${esc(m.title||"Майлстоун")} · ${short(d)}"><i></i><b>${esc(m.title||"Майлстоун")}</b></div>`;
+  });
+  if(t>=R.lo && t<=R.hi) bg += `<div class="td" style="left:${x(t)+dw/2-1}px" title="Сегодня"></div>`;
+
+  const rows = flatten();
+  let body = "";
+  if(S.mode==="loading"){
+    body = `<div class="empty"><h2>Загружаю план…</h2><p>Эпики, стори и задачи появятся здесь через секунду.</p></div>`;
+  } else if(!rows.length){
+    body = `<div class="empty"><h2>План пока пуст</h2><p>Начните с эпика. Внутри эпика добавляйте юзер-стори, внутри стори — задачи. Полосы на таймлайне двигаются мышью, края растягивают сроки.</p><button type="button" class="btn primary" data-act="new-epic">+ Первый эпик</button></div>`;
+  } else {
+    rows.forEach(({it, depth})=>{
+      const sp = span(it), k = hasKids(it.id), open = !S.collapsed.has(it.id);
+      const st = STATUSES.some(s=>s[0]===it.status) ? it.status : "backlog";
+      const left = x(sp.s), w = Math.max(6, (sp.e-sp.s+1)*dw);
+      const pad = 8 + depth*18;
+      const caret = k ? `<button type="button" class="caret" data-act="toggle" aria-expanded="${open}" aria-label="${open?"Свернуть":"Развернуть"}"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M3 1.5 7 5 3 8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>` : `<span class="spacer"></span>`;
+      const addL = it.type==="epic" ? "стори или этап" : "задачу";
+      const add = CHILD[it.type] ? `<button type="button" class="add" data-act="add" title="Добавить ${addL}" aria-label="Добавить ${addL}">+</button>` : "";
+      const own = it.owner ? `<span class="own" title="${esc(it.owner)}">${esc(initials(it.owner))}</span>` : "";
+      const bar = sp.derived
+        ? `<div class="bar sum t-${it.type}${colorOk(it.color)?" c-"+it.color:""}${S.sel.has(it.id)?" grp":""}" data-id="${it.id}" style="left:${left}px;width:${w}px" title="${esc(it.title)} · ${short(sp.s)}–${short(sp.e)} · ${sp.p}%"><i class="pg${sp.p>=100?" full":""}" style="width:${sp.p}%"></i></div>`
+        : `<div class="bar leaf t-${it.type} st-${st}${colorOk(it.color)?" c-"+it.color:""}${S.sel.has(it.id)?" grp":""}" data-id="${it.id}" style="left:${left}px;width:${w}px" title="${esc(it.title)} · ${short(sp.s)}–${short(sp.e)} · ${sp.p}%"><i class="pg${sp.p>=100?" full":""}" style="width:${sp.p}%"></i><span class="h l"></span><span class="h r"></span></div>`;
+      body += `<div class="row t-${it.type} k-${kindKey(it)}${S.editId===it.id?" sel":""}${S.sel.has(it.id)?" picked":""}${S.clip.includes(it.id)?" clip":""}" data-id="${it.id}">
+        <div class="cl" style="padding-left:${pad}px">${caret}${it.type==="epic"?"":`<button type="button" class="pick" data-act="pick" aria-pressed="${S.sel.has(it.id)}" aria-label="Выбрать" title="Выбрать (Shift — диапазон). Правый клик — меню"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5.2 4.1 7.3 8 2.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`}<span class="kind">${esc(kindOf(it))}</span><button type="button" class="name" data-act="edit" title="${esc(it.title)}">${esc(it.title||"Без названия")}</button><span class="dates">${short(sp.s)}–${short(sp.e)}</span>${own}${add}</div>
+        <div class="ct" style="width:${W}px">${bar}<span class="bl" style="left:${left+w}px">${esc(it.title)}</span></div></div>`;
+    });
+  }
+
+  board.style.width = `calc(var(--left-w) + ${W}px)`;
+  board.innerHTML = `<div class="hdr"><div class="hdr-left"><button type="button" class="ms-add" data-act="ms-add" title="Добавить майлстоун. Можно также кликнуть по полосе над месяцами в нужную дату">+ Майлстоун</button><span>План</span><button type="button" class="split" id="split" aria-label="Ширина колонки с названиями" title="Потяните, чтобы изменить ширину. Двойной клик — по самому длинному названию"></button></div><div class="cal" style="width:${W}px"><div class="ms-row" title="Клик — майлстоун в эту дату">${msf}</div>${top}${bot}</div></div>
+    <div class="body"><div class="bg" style="left:var(--left-w);width:${W}px">${bg}</div>${body}</div>`;
+
+  renderSelbar();
+  if(!S.scrolledToday && S.mode!=="loading"){ S.scrolledToday = true; scrollToToday(false); }
+}
+function count(type){ let n = 0; S.items.forEach(i=>{ if(i.type===type) n++; }); return n; }
+function scrollToToday(smooth){
+  const R = S.range || computeRange(); const dw = S.dw;
+  const target = (todayN()-R.lo)*dw - 7*dw;
+  scroller.scrollTo({left:Math.max(0,target), behavior: smooth ? "smooth" : "auto"});
+}
+
+/* ---------- persistence ---------- */
+const FIELDS = ["type","label","color","parent","title","start","end","owner","status","progress","link","notes","order"];
+function clean(it){ const o = {}; FIELDS.forEach(f=>{ o[f] = it[f]===undefined ? (f==="parent"?null:"") : it[f]; }); o.progress = +o.progress||0; o.order = +o.order||0; return o; }
+function saveLocal(){ ls("gantt.items", JSON.stringify([...S.items.values()])); }
+async function persist(list){
+  list.forEach(it=>S.items.set(it.id, it));
+  if(S.mode==="db"){
+    try{ await Promise.all(list.map(it=>S.col.doc(it.id).set(clean(it)))); }
+    catch(e){ toast(e && e.code==="permission_denied" ? "Нет прав на изменение плана: попросите владельца дать доступ «Участник» или выше." : "Не удалось сохранить изменения. Проверьте соединение и повторите."); }
+  } else saveLocal();
+}
+async function removeItems(ids){
+  ids.forEach(id=>S.items.delete(id));
+  if(S.mode==="db"){
+    try{ await Promise.all(ids.map(id=>S.col.doc(id).delete())); }
+    catch(e){ toast("Не удалось удалить. Проверьте соединение и повторите."); }
+  } else saveLocal();
+  render();
+}
+
+async function boot(){
+  renderLegend(); render();
+  let db = null;
+  try{ db = window.claude && window.claude.use ? await window.claude.use("db") : null; }catch(e){ db = null; }
+  try{ S.downloads = window.claude && window.claude.use ? await window.claude.use("downloads") : null; }catch(e){}
+  if(db){
+    S.col = db.collection("items"); S.mode = "db";
+    S.col.onSnapshot(snap=>{
+      const m = new Map(); snap.docs.forEach(d=>{ const v = d.data(); if(v) m.set(d.id, Object.assign({id:d.id}, v)); });
+      S.items = m; render();
+      if(S.editId && !S.items.has(S.editId) && !S.draft) closeEditor();
+    }, err=>{ toast("План не загрузился: "+(err && err.message || "ошибка соединения")); });
+    S.mcol = db.collection("milestones");
+    S.mcol.onSnapshot(snap=>{ const m = new Map(); snap.docs.forEach(d=>{ const v = d.data(); if(v) m.set(d.id, Object.assign({id:d.id}, v)); }); S.ms = m; render(); }, ()=>{});
+  } else {
+    S.mode = "local";
+    try{ const arr = JSON.parse(ls("gantt.items")||"[]"); arr.forEach(it=>S.items.set(it.id, it)); }catch(e){}
+    try{ const arr = JSON.parse(ls("gantt.ms")||"[]"); arr.forEach(m=>S.ms.set(m.id, m)); }catch(e){}
+    const n = $("notice"); n.textContent = "Общее хранилище недоступно в этом окне, поэтому изменения сохраняются только в этом браузере. Откройте страницу по ссылке claude.ai, чтобы работать с общим планом."; n.hidden = false;
+    render();
+  }
+}
+
+/* ---------- editor ---------- */
+function crumbs(it){ const out = []; let p = it.parent && S.items.get(it.parent); while(p){ out.unshift(p.title); p = p.parent && S.items.get(p.parent); } return out.join(" › "); }
+function openEditor(id, draft){
+  const it = draft || S.items.get(id); if(!it) return;
+  S.editId = it.id; S.draft = draft || null;
+  const derived = !draft && hasKids(it.id); const sp = span(it);
+  const ed = $("ed");
+  ed.innerHTML = `<form id="edForm" novalidate>
+    <div class="ed-h"><div class="kindline"><span class="kind" style="${it.type==="epic"?"background:var(--sum);color:var(--surface);border-color:var(--sum)":""}">${esc(kindOf(it))}</span>${draft?"новый элемент":""}</div>
+      ${it.parent?`<div class="crumb">${esc(crumbs(it))}</div>`:""}</div>
+    <div class="ed-b">
+      ${it.type==="story"?`<div class="f"><span class="lb">Тип</span><div class="seg" role="radiogroup" aria-label="Тип" id="ed-label">${LABELS.map(([k,l])=>`<button type="button" role="radio" data-label="${k}" aria-pressed="${(it.label||"story")===k}" aria-checked="${(it.label||"story")===k}">${l}</button>`).join("")}</div></div>`:""}
+      <div class="f"><label for="ed-title">Название</label><textarea id="ed-title" rows="2" required>${esc(it.title)}</textarea></div>
+      <div class="f2"><div class="f"><label for="ed-start">Начало</label><input type="date" id="ed-start" value="${esc(ds(sp.s))}" ${derived?"disabled":""}></div>
+        <div class="f"><label for="ed-end">Конец</label><input type="date" id="ed-end" value="${esc(ds(sp.e))}" ${derived?"disabled":""}></div></div>
+      ${derived?`<div class="hint">Сроки и прогресс считаются по вложенным элементам. Чтобы сдвинуть всё сразу, перетащите сводную полосу на таймлайне.</div>`:""}
+      <div class="f2"><div class="f"><label for="ed-status">Статус</label><select id="ed-status">${STATUSES.map(([k,l])=>`<option value="${k}"${(it.status||"backlog")===k?" selected":""}>${l}</option>`).join("")}</select></div>
+        <div class="f"><label for="ed-owner">Ответственный</label><input id="ed-owner" value="${esc(it.owner)}" placeholder="Имя"></div></div>
+      <div class="f"><span class="lb">Цвет полосы</span><div class="sw" id="ed-color" role="radiogroup" aria-label="Цвет полосы">${swatches(colorOk(it.color)?it.color:"", "data-color")}</div></div>
+      ${derived?"":`<div class="f"><span class="lb">Прогресс</span><div class="rng"><input type="range" id="ed-progress" min="0" max="100" step="5" value="${+it.progress||0}" aria-label="Прогресс"><output id="ed-pv">${+it.progress||0}%</output></div></div>`}
+      <div class="f"><label for="ed-link">Ссылка на задачу</label><div class="linkrow"><input id="ed-link" value="${esc(it.link)}" placeholder="https://hilt.viewapp.io/browse/VA-…">${it.link && /^https?:\/\//.test(it.link)?`<a href="${esc(it.link)}" target="_blank" rel="noopener">Открыть</a>`:""}</div></div>
+      <div class="f"><label for="ed-notes">Описание</label><textarea id="ed-notes" rows="7">${esc(it.notes)}</textarea></div>
+    </div>
+    <div class="ed-f">
+      <button type="submit" class="btn primary">${draft?"Создать":"Сохранить"}</button>
+      <button type="button" class="btn" data-act="close">Отмена</button>
+      <span class="grow"></span>
+      ${draft?"":`${CHILD[it.type]?`<button type="button" class="btn" data-act="ed-add">+ ${it.type==="epic"?"Стори / этап":"Задача"}</button>`:""}<button type="button" class="btn danger" data-act="del">Удалить</button>`}
+    </div></form>`;
+  ed.hidden = false; $("scrim").hidden = false;
+  const pr = $("ed-progress"); if(pr) pr.addEventListener("input", ()=>$("ed-pv").textContent = pr.value+"%");
+  const sw = $("ed-color"); if(sw) sw.addEventListener("click", ev=>{ const b = ev.target.closest("[data-color]"); if(!b) return; sw.querySelectorAll("[data-color]").forEach(x=>x.setAttribute("aria-pressed", String(x===b))); });
+  const lg = $("ed-label"); if(lg) lg.addEventListener("click", ev=>{ const b = ev.target.closest("[data-label]"); if(!b) return; lg.querySelectorAll("[data-label]").forEach(x=>{ const on = x===b; x.setAttribute("aria-pressed", String(on)); x.setAttribute("aria-checked", String(on)); }); ed.querySelector(".kindline .kind").textContent = b.textContent; });
+  $("edForm").addEventListener("submit", onSave);
+  setTimeout(()=>{ const t = $("ed-title"); t.focus(); if(draft) t.select(); }, 30);
+  render();
+}
+function closeEditor(){ $("ed").hidden = true; $("scrim").hidden = true; $("ed").innerHTML = ""; S.editId = null; S.draft = null; render(); }
+async function onSave(e){
+  e.preventDefault();
+  const base = S.draft || S.items.get(S.editId); if(!base) return closeEditor();
+  const it = Object.assign({}, base);
+  it.title = $("ed-title").value.trim() || "Без названия";
+  const swOn = document.querySelector('#ed-color [aria-pressed="true"]'); if(swOn) it.color = swOn.dataset.color || "";
+  const lgOn = document.querySelector('#ed-label [aria-pressed="true"]'); if(lgOn) it.label = lgOn.dataset.label;
+  it.status = $("ed-status").value; it.owner = $("ed-owner").value.trim();
+  it.link = $("ed-link").value.trim(); it.notes = $("ed-notes").value;
+  const sI = $("ed-start"), eI = $("ed-end");
+  if(!sI.disabled){
+    if(!sI.value || !eI.value){ toast("Укажите даты начала и конца."); return; }
+    let s = dn(sI.value), en = dn(eI.value); if(en<s) [s,en] = [en,s];
+    it.start = ds(s); it.end = ds(en);
+  }
+  const pr = $("ed-progress"); if(pr) it.progress = +pr.value;
+  if(it.status==="done" && pr && !hasKids(it.id)) it.progress = 100;
+  const isNew = !!S.draft;
+  if(isNew && it.parent) S.collapsed.delete(it.parent);
+  closeEditor();
+  await persist([it]); render();
+  if(isNew){ const kl = kindOf(it); toast(`${kl} «${it.title}» — добавлено`); }
+}
+function newItem(type, parentId){
+  const t = todayN(); let s = t, len = type==="epic"?28:type==="story"?14:5;
+  if(parentId){ const p = S.items.get(parentId); if(p){ const sp = span(p); const sib = kids(parentId); s = sib.length ? Math.min(sp.e+1, Math.max(...sib.map(c=>span(c).e))+1) : sp.s; if(sp.derived===false) s = sp.s; } }
+  openEditor(null, {id:uid(), type, label: type==="story"?"story":"", parent:parentId||null, title:"", start:ds(s), end:ds(s+len-1), owner:"", status:"backlog", progress:0, link:"", notes:"", order:Date.now()});
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-act],[data-scale],[data-zoom]"); if(!b) return;
+  if(b.dataset.scale){ const mid = centerDay(); S.scale = b.dataset.scale; S.dw = SCALES[S.scale]; ls("gantt.scale", S.scale); ls("gantt.dw", String(S.dw)); render(); scrollToDay(mid); return; }
+  if(b.dataset.zoom){ const mid = centerDay(); const z = +b.dataset.zoom; S.dw = z===0 ? SCALES[S.scale] : Math.min(80, Math.max(1.5, S.dw*(z>0?1.25:0.8))); ls("gantt.dw", String(S.dw)); render(); scrollToDay(mid); return; }
+  const row = b.closest(".row"); const id = row && row.dataset.id;
+  switch(b.dataset.act){
+    case "toggle": S.collapsed.has(id) ? S.collapsed.delete(id) : S.collapsed.add(id); ls("gantt.collapsed", JSON.stringify([...S.collapsed])); render(); break;
+    case "edit": openEditor(id); break;
+    case "pick": pick(id, e.shiftKey); break;
+    case "add": { const it = S.items.get(id); if(it && CHILD[it.type]) newItem(CHILD[it.type], id); break; }
+    case "new-epic": newItem("epic"); break;
+    case "ms-add": openMs(null, todayN(), b); break;
+    case "close": closeEditor(); break;
+    case "ed-add": { const it = S.items.get(S.editId); if(it) newItem(CHILD[it.type], it.id); break; }
+    case "del": {
+      if(!b.classList.contains("armed")){ const n = descendants(S.editId).length; b.classList.add("armed"); b.textContent = n ? `Удалить вместе с ${n} влож.` : "Точно удалить?"; setTimeout(()=>{ if(b.isConnected){ b.classList.remove("armed"); b.textContent = "Удалить"; } }, 4000); return; }
+      const ids = [S.editId, ...descendants(S.editId).map(d=>d.id)]; closeEditor(); removeItems(ids); toast("Удалено"); break;
+    }
+  }
+});
+$("scrim").addEventListener("click", closeEditor);
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !$("ed").hidden) closeEditor(); });
+$("b-epic").addEventListener("click", ()=>newItem("epic"));
+$("b-today").addEventListener("click", ()=>scrollToToday(true));
+$("b-fold").addEventListener("click", ()=>{
+  const parents = [...S.items.values()].filter(i=>hasKids(i.id));
+  const allFolded = parents.every(p=>S.collapsed.has(p.id));
+  S.collapsed.clear(); if(!allFolded) parents.forEach(p=>S.collapsed.add(p.id));
+  $("b-fold").textContent = allFolded ? "Свернуть всё" : "Развернуть всё";
+  ls("gantt.collapsed", JSON.stringify([...S.collapsed])); render();
+});
+function centerDay(){ const R = S.range; if(!R) return todayN(); const lw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--left-w"))||360; return R.lo + (scroller.scrollLeft + (scroller.clientWidth-lw)/2)/S.dw; }
+function scrollToDay(n){ const R = S.range; const lw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--left-w"))||360; scroller.scrollLeft = Math.max(0, (n-R.lo)*S.dw - (scroller.clientWidth-lw)/2); }
+
+/* export / import */
+$("b-export").addEventListener("click", async ()=>{
+  const data = JSON.stringify({exported:new Date().toISOString(), items:[...S.items.values()], milestones:[...S.ms.values()]}, null, 2);
+  const name = `rososmotr-roadmap-${ds(todayN())}.json`;
+  if(S.downloads){ try{ await S.downloads.save({filename:name, data}); return; }catch(e){ if(e && e.code==="declined") return; } }
+  try{ await navigator.clipboard.writeText(data); toast("JSON плана скопирован в буфер обмена"); }catch(e){ toast("Скачивание недоступно в этом окне. Откройте страницу на claude.ai."); }
+});
+$("b-import").addEventListener("click", ()=>$("f-import").click());
+$("f-import").addEventListener("change", async e=>{
+  const f = e.target.files[0]; e.target.value = ""; if(!f) return;
+  try{
+    const j = JSON.parse(await f.text()); const arr = Array.isArray(j) ? j : j.items;
+    if(!Array.isArray(arr)) throw 0;
+    const ok = arr.filter(i=>i && i.id && KIND[i.type] && i.start && i.end).map(i=>Object.assign({}, clean(i), {id:String(i.id)}));
+    await persist(ok);
+    const ms = Array.isArray(j.milestones) ? j.milestones.filter(m=>m && m.id && m.date) : [];
+    for(const m of ms) await saveMs({id:String(m.id), title:String(m.title||"Майлстоун"), date:String(m.date), color:colorOk(m.color)?m.color:"violet"});
+    render(); toast(`Импортировано элементов: ${ok.length}${ms.length?`, майлстоунов: ${ms.length}`:""}`);
+  }catch(err){ toast("Файл не похож на экспорт плана. Нужен JSON, сохранённый кнопкой «Экспорт»."); }
+});
+
+/* drag bars */
+const tip = $("tip");
+board.addEventListener("pointerdown", e=>{
+  const bar = e.target.closest(".bar"); if(!bar || e.button>0) return;
+  const it = S.items.get(bar.dataset.id); if(!it) return;
+  const sum = bar.classList.contains("sum");
+  const mode = sum ? "move" : e.target.classList.contains("l") ? "l" : e.target.classList.contains("r") ? "r" : "move";
+  const sp = span(it);
+  S.drag = {id:it.id, mode, x0:e.clientX, moved:false, bar, label:bar.parentNode.querySelector(".bl"), s:sp.s, e:sp.e, days:0, group:null};
+  if(mode==="move" && S.sel.has(it.id) && S.sel.size>1){
+    const ids = new Set(); roots([...S.sel]).forEach(r=>{ ids.add(r); descendants(r).forEach(d=>ids.add(d.id)); });
+    S.drag.group = [...ids];
+    S.drag.els = [...ids].map(x=>{ const b = board.querySelector(`.bar[data-id="${x}"]`); return b && {b, l:parseFloat(b.style.left), lab:b.parentNode.querySelector(".bl"), w:parseFloat(b.style.width)}; }).filter(Boolean);
+  }
+  bar.setPointerCapture(e.pointerId); e.preventDefault();
+});
+board.addEventListener("pointermove", e=>{
+  const d = S.drag; if(!d) return;
+  const dx = e.clientX - d.x0; if(Math.abs(dx)>3) d.moved = true; if(!d.moved) return;
+  const dw = S.dw; let days = Math.round(dx/dw);
+  let s = d.s, en = d.e;
+  if(d.mode==="move"){ s += days; en += days; }
+  else if(d.mode==="l"){ s = Math.min(d.e, d.s+days); days = s-d.s; }
+  else { en = Math.max(d.s, d.e+days); days = en-d.e; }
+  d.days = days;
+  const x = (s-S.range.lo)*dw, w = Math.max(6,(en-s+1)*dw);
+  if(d.group){
+    d.els.forEach(o=>{ const nl = o.l + days*dw; o.b.style.left = nl+"px"; if(o.lab) o.lab.style.left = (nl+o.w)+"px"; });
+    tip.textContent = `${d.group.length} шт. · ${days>0?"+":""}${days} дн.`;
+  } else {
+    d.bar.style.left = x+"px"; d.bar.style.width = w+"px"; if(d.label) d.label.style.left = (x+w)+"px";
+    tip.textContent = `${short(s)} – ${short(en)} · ${en-s+1} дн.`;
+  } tip.style.left = (e.clientX+12)+"px"; tip.style.top = (e.clientY-34)+"px"; tip.hidden = false;
+});
+async function endDrag(){
+  const d = S.drag; if(!d) return; S.drag = null; tip.hidden = true;
+  if(!d.moved){ openEditor(d.id); return; }
+  if(!d.days){ render(); return; }
+  const it = S.items.get(d.id); const changed = [];
+  const shift = o => { const c = Object.assign({}, o); c.start = ds(dn(o.start)+d.days); c.end = ds(dn(o.end)+d.days); return c; };
+  if(d.group){ d.group.forEach(x=>{ const o = S.items.get(x); if(o) changed.push(shift(o)); }); }
+  else if(d.mode==="move"){ changed.push(shift(it)); descendants(it.id).forEach(c=>changed.push(shift(c))); }
+  else { const c = Object.assign({}, it); if(d.mode==="l") c.start = ds(d.s+d.days); else c.end = ds(d.e+d.days); changed.push(c); }
+  changed.forEach(c=>S.items.set(c.id, c)); render();
+  await persist(changed);
+}
+board.addEventListener("pointerup", endDrag);
+board.addEventListener("pointercancel", ()=>{ if(S.drag){ S.drag = null; tip.hidden = true; render(); } });
+setInterval(()=>{ if(S.pending && !S.drag && !S.ld){ S.pending = false; render(); } }, 400);
+
+/* resizable name column */
+function setLeftW(w, save){
+  w = Math.round(Math.max(160, Math.min(w, Math.max(240, window.innerWidth*0.75))));
+  S.leftW = w; document.documentElement.style.setProperty("--left-w", w+"px");
+  if(save) ls("gantt.leftw", String(w));
+}
+function curLeftW(){ return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--left-w"))||360; }
+let rs = null;
+board.addEventListener("pointerdown", e=>{
+  const h = e.target.closest(".split"); if(!h) return;
+  rs = {x0:e.clientX, w0:curLeftW(), h}; h.classList.add("on"); document.body.classList.add("resizing");
+  h.setPointerCapture(e.pointerId); e.preventDefault(); e.stopPropagation();
+}, true);
+board.addEventListener("pointermove", e=>{ if(!rs) return; setLeftW(rs.w0 + e.clientX - rs.x0, false); }, true);
+function endResize(){ if(!rs) return; rs.h.classList.remove("on"); document.body.classList.remove("resizing"); setLeftW(curLeftW(), true); rs = null; }
+board.addEventListener("pointerup", endResize, true);
+board.addEventListener("pointercancel", endResize, true);
+board.addEventListener("dblclick", e=>{
+  if(!e.target.closest(".split")) return;
+  let extra = 0; board.querySelectorAll(".name").forEach(n=>{ extra = Math.max(extra, n.scrollWidth - n.clientWidth); });
+  setLeftW(curLeftW() + extra + 6, true);
+});
+board.addEventListener("keydown", e=>{
+  if(!e.target.closest(".split")) return;
+  if(e.key==="ArrowLeft" || e.key==="ArrowRight"){ e.preventDefault(); setLeftW(curLeftW() + (e.key==="ArrowRight"?24:-24), true); }
+});
+
+/* selection, copy, paste / move */
+function pruneSel(){ [...S.sel].forEach(id=>{ if(!S.items.has(id)) S.sel.delete(id); }); S.clip = S.clip.filter(id=>S.items.has(id)); }
+function pick(id, range){
+  if(range && S.lastPick && S.lastPick!==id){
+    const vis = flatten().map(r=>r.it).filter(i=>i.type!=="epic").map(i=>i.id);
+    const a = vis.indexOf(S.lastPick), b = vis.indexOf(id);
+    if(a>=0 && b>=0){ const [lo,hi] = a<b?[a,b]:[b,a]; vis.slice(lo,hi+1).forEach(x=>S.sel.add(x)); render(); return; }
+  }
+  S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id); S.lastPick = id; render();
+}
+function ancestors(id){ const out = []; let p = S.items.get(id); while(p && p.parent){ out.push(p.parent); p = S.items.get(p.parent); } return out; }
+function roots(ids){ const set = new Set(ids); return ids.filter(id=>S.items.has(id) && !ancestors(id).some(a=>set.has(a))); }
+function copySel(ids){
+  S.clip = roots(ids.filter(id=>{ const it = S.items.get(id); return it && it.type!=="epic"; }));
+  S.sel.clear(); render();
+  if(S.clip.length) toast(`Скопировано: ${S.clip.length}. Правый клик по эпику — вставить или перенести.`);
+}
+// what an item becomes under a target; null = not allowed
+function fitFor(target, it){
+  if(target.type==="epic"){ if(it.type==="story") return {type:"story", label:it.label||"story"}; if(it.type==="task") return {type:"story", label:"task"}; }
+  if(target.type==="story"){ if(it.type==="task") return {type:"task", label:""}; if(it.type==="story" && !hasKids(it.id)) return {type:"task", label:""}; }
+  return null;
+}
+function pastePlan(target){
+  const ok = [], bad = [];
+  S.clip.forEach(id=>{ const it = S.items.get(id); if(!it) return; const f = fitFor(target, it); (f ? ok : bad).push({it, f}); });
+  return {ok, bad};
+}
+async function pasteInto(targetId, move){
+  const target = S.items.get(targetId); if(!target) return;
+  const {ok, bad} = pastePlan(target);
+  const list = []; let n = 0; const base = Date.now();
+  if(move){
+    ok.forEach(({it, f})=>{
+      if(it.id===target.id || ancestors(target.id).includes(it.id)) return;
+      list.push(Object.assign({}, it, {parent:target.id, type:f.type, label:f.label, order:base+n++}));
+    });
+  } else {
+    const cloneTree = (src, parent, f) => {
+      const c = Object.assign({}, src, {id:uid(), parent, order:base+n++}); if(f){ c.type = f.type; c.label = f.label; }
+      list.push(c); kids(src.id).forEach(k=>cloneTree(k, c.id, null));
+    };
+    ok.forEach(({it, f})=>cloneTree(it, target.id, f));
+  }
+  if(!list.length){ toast(bad.length ? "Сюда нельзя вставить скопированные элементы: в стори можно вкладывать только задачи." : "Нечего вставлять."); return; }
+  S.collapsed.delete(target.id); ls("gantt.collapsed", JSON.stringify([...S.collapsed]));
+  if(move) S.clip = [];
+  await persist(list); render();
+  const what = move ? "Перенесено" : "Вставлено";
+  toast(`${what} в «${target.title}»: ${move?list.length:ok.length}${bad.length?` · пропущено ${bad.length} (стори со своими задачами не кладётся в стори)`:""}`);
+}
+function delSet(ids){ const set = new Set(); roots(ids).forEach(r=>{ set.add(r); descendants(r).forEach(d=>set.add(d.id)); }); return [...set]; }
+function armDel(b){
+  const n = S.sel.size, all = delSet([...S.sel]).length, extra = all - n;
+  b.classList.add("armed"); b.textContent = extra>0 ? `Удалить ${n} + ${extra} влож.?` : `Удалить ${n}?`;
+  clearTimeout(armDel.t); armDel.t = setTimeout(()=>{ if(b.isConnected){ b.classList.remove("armed"); b.textContent = b.dataset.m ? `Удалить выбранные (${S.sel.size})` : "Удалить"; } }, 4000);
+}
+function deleteSel(){
+  const ids = delSet([...S.sel]); const n = ids.length;
+  S.sel.clear(); S.sbColor = false; if(S.editId && ids.includes(S.editId)) closeEditor();
+  removeItems(ids); toast(`Удалено: ${n}`);
+}
+function colorize(ids, col){
+  const list = ids.map(x=>S.items.get(x)).filter(Boolean).map(o=>Object.assign({}, o, {color:col}));
+  if(!list.length) return; persist(list).then(render); render();
+  toast(col ? `Цвет изменён: ${list.length}` : `Цвет по статусу: ${list.length}`);
+}
+function renderSelbar(){
+  pruneSel();
+  const bar = $("selbar");
+  if(S.sel.size){
+    bar.innerHTML = `<span>Выбрано: ${S.sel.size}</span>${S.sel.size>1?`<span class="hint2">тяните любую выделенную полосу — сдвинутся все</span>`:""}<button type="button" data-sb="copy">Копировать</button><button type="button" data-sb="color" aria-expanded="${S.sbColor}">Цвет</button><button type="button" class="del" data-sb="del">Удалить</button><button type="button" data-sb="clear">Снять</button>${S.sbColor?`<div class="sw">${swatches("__none","data-sbc")}</div>`:""}`;
+    bar.hidden = false;
+  } else if(S.clip.length){
+    bar.innerHTML = `<span>В буфере: ${S.clip.length}</span><span class="hint2">правый клик по эпику → вставить</span><button type="button" data-sb="unclip">Очистить</button>`;
+    bar.hidden = false;
+  } else bar.hidden = true;
+}
+$("selbar").addEventListener("click", e=>{
+  const c = e.target.closest("[data-sbc]");
+  if(c){ colorize([...S.sel], c.dataset.sbc); S.sbColor = false; return; }
+  const b = e.target.closest("[data-sb]"); if(!b) return;
+  if(b.dataset.sb==="copy") copySel([...S.sel]);
+  if(b.dataset.sb==="color"){ S.sbColor = !S.sbColor; renderSelbar(); return; }
+  if(b.dataset.sb==="del"){ if(!b.classList.contains("armed")){ armDel(b); return; } deleteSel(); return; }
+  if(b.dataset.sb==="clear"){ S.sel.clear(); S.sbColor = false; render(); }
+  if(b.dataset.sb==="unclip"){ S.clip = []; render(); }
+});
+
+const menu = $("menu"); let menuFor = null;
+function hideMenu(){ if(menu.hidden) return; menu.hidden = true; menu.innerHTML = ""; board.querySelectorAll(".row.drop").forEach(r=>r.classList.remove("drop")); menuFor = null; }
+board.addEventListener("contextmenu", e=>{
+  if(S.ld){ e.preventDefault(); return; }
+  const row = e.target.closest(".row"); if(!row) return;
+  e.preventDefault();
+  const it = S.items.get(row.dataset.id); if(!it) return;
+  menuFor = it.id;
+  const items = [];
+  const selIds = S.sel.size ? [...S.sel] : [];
+  if(it.type!=="epic"){
+    if(selIds.length && S.sel.has(it.id)) items.push(`<button type="button" role="menuitem" data-m="copy-sel">Копировать выбранные <kbd>${selIds.length}</kbd></button>`);
+    else items.push(`<button type="button" role="menuitem" data-m="copy-one">Копировать</button>`);
+    if(selIds.length && !S.sel.has(it.id)) items.push(`<button type="button" role="menuitem" data-m="copy-sel">Копировать выбранные <kbd>${selIds.length}</kbd></button>`);
+  }
+  if(S.clip.length && (it.type==="epic" || it.type==="story")){
+    const {ok} = pastePlan(it);
+    const dis = ok.length ? "" : " disabled";
+    if(items.length) items.push("<hr>");
+    items.push(`<button type="button" role="menuitem" data-m="paste"${dis}>Вставить копию сюда <kbd>${ok.length}</kbd></button>`);
+    items.push(`<button type="button" role="menuitem" data-m="move"${dis}>Перенести сюда <kbd>${ok.length}</kbd></button>`);
+    if(!ok.length) items.push(`<div class="mh" style="text-transform:none;letter-spacing:0;font-weight:400;white-space:normal">В стори можно вкладывать только задачи</div>`);
+  } else if(it.type==="epic" && !S.clip.length){
+    items.push(`<div class="mh" style="text-transform:none;letter-spacing:0;font-weight:400;white-space:normal">Буфер пуст: выберите пункты галочкой слева и скопируйте</div>`);
+  }
+  if(selIds.length){ items.push("<hr>"); if(S.sel.has(it.id)) items.push(`<button type="button" role="menuitem" class="danger-m" data-m="del-sel">Удалить выбранные (${selIds.length})</button>`); items.push(`<button type="button" role="menuitem" data-m="clear">Снять выделение</button>`); }
+  const colorTargets = (S.sel.has(it.id) && S.sel.size) ? [...S.sel] : [it.id];
+  items.push("<hr>", `<div class="mh">Цвет полосы${colorTargets.length>1?` · ${colorTargets.length} шт.`:""}</div><div class="sw">${swatches(colorTargets.length===1 && colorOk(it.color)?it.color:(colorTargets.length>1?"__none":""), "data-mc")}</div>`);
+  items.push("<hr>", `<button type="button" role="menuitem" data-m="edit">Открыть карточку</button>`);
+  menu.innerHTML = `<div class="mh">${esc(kindOf(it))} · ${esc(it.title)}</div>` + items.join("");
+  menu.hidden = false;
+  if(it.type==="epic" || it.type==="story") row.classList.add("drop");
+  const mw = menu.offsetWidth, mh = menu.offsetHeight;
+  menu.style.left = Math.min(e.clientX, window.innerWidth - mw - 8) + "px";
+  menu.style.top = Math.min(e.clientY, window.innerHeight - mh - 8) + "px";
+  const first = menu.querySelector("button:not(:disabled)"); if(first) first.focus({preventScroll:true});
+});
+menu.addEventListener("click", e=>{
+  const c = e.target.closest("[data-mc]");
+  if(c){ const id = menuFor; const ids = (S.sel.has(id) && S.sel.size) ? [...S.sel] : [id]; hideMenu();
+    colorize(ids, c.dataset.mc); return; }
+  const b = e.target.closest("[data-m]"); if(!b || b.disabled) return;
+  if(b.dataset.m==="del-sel" && !b.classList.contains("armed")){ armDel(b); return; }
+  const id = menuFor; hideMenu();
+  switch(b.dataset.m){
+    case "copy-one": copySel([id]); break;
+    case "copy-sel": copySel([...S.sel]); break;
+    case "paste": pasteInto(id, false); break;
+    case "move": pasteInto(id, true); break;
+    case "clear": S.sel.clear(); render(); break;
+    case "del-sel": deleteSel(); break;
+    case "edit": openEditor(id); break;
+  }
+});
+document.addEventListener("pointerdown", e=>{ if(!menu.hidden && !menu.contains(e.target)) hideMenu(); }, true);
+document.addEventListener("keydown", e=>{
+  if(e.key==="Escape"){ if(!menu.hidden){ hideMenu(); return; } if(S.sel.size && $("ed").hidden){ S.sel.clear(); render(); } }
+});
+scroller.addEventListener("scroll", hideMenu, {passive:true});
+window.addEventListener("resize", hideMenu);
+
+/* milestones */
+const pop = $("mspop"); let msEdit = null;
+function hidePop(){ if(pop.hidden) return; pop.hidden = true; pop.innerHTML = ""; msEdit = null; }
+function openMs(id, day, anchor){
+  hideMenu();
+  const m = id ? S.ms.get(id) : {id:uid(), title:"", date:ds(day), color:"violet"};
+  if(!m) return; msEdit = {m, isNew:!id};
+  pop.innerHTML = `<h3>${id?"Майлстоун":"Новый майлстоун"}</h3>
+    <div class="f"><label for="ms-title">Название</label><input id="ms-title" value="${esc(m.title)}" placeholder="Например, релиз 2.4"></div>
+    <div class="f"><label for="ms-date">Дата</label><input type="date" id="ms-date" value="${esc(m.date)}"></div>
+    <div class="f"><span class="lb">Цвет линии</span><div class="sw" id="ms-color">${COLORS.map(([k,l])=>`<button type="button" data-msc="${k}" aria-pressed="${(m.color||"violet")===k}" title="${l}" aria-label="${l}" style="--swc:var(--c-${k})"></button>`).join("")}</div></div>
+    <div class="row2"><button type="button" class="btn primary" data-mp="save">${id?"Сохранить":"Добавить"}</button><button type="button" class="btn" data-mp="cancel">Отмена</button>${id?`<span style="flex:1"></span><button type="button" class="btn danger" data-mp="del">Удалить</button>`:""}</div>`;
+  pop.hidden = false;
+  const r = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : {left:window.innerWidth/2-140, bottom:120};
+  pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - pop.offsetWidth - 8)) + "px";
+  pop.style.top = Math.max(8, Math.min(r.bottom + 6, window.innerHeight - pop.offsetHeight - 8)) + "px";
+  setTimeout(()=>$("ms-title") && $("ms-title").focus(), 20);
+}
+pop.addEventListener("click", async e=>{
+  const sw = e.target.closest("[data-msc]");
+  if(sw){ pop.querySelectorAll("[data-msc]").forEach(x=>x.setAttribute("aria-pressed", String(x===sw))); return; }
+  const b = e.target.closest("[data-mp]"); if(!b || !msEdit) return;
+  const {m, isNew} = msEdit;
+  if(b.dataset.mp==="cancel") return hidePop();
+  if(b.dataset.mp==="del"){
+    if(!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent = "Точно удалить?"; return; }
+    hidePop(); S.ms.delete(m.id); render();
+    if(S.mcol){ try{ await S.mcol.doc(m.id).delete(); }catch(err){ toast("Не удалось удалить майлстоун. Проверьте соединение."); } } else saveMsLocal();
+    return;
+  }
+  const date = $("ms-date").value; if(!date){ toast("Укажите дату майлстоуна."); return; }
+  const on = pop.querySelector('[data-msc][aria-pressed="true"]');
+  const nm = {id:m.id, title:$("ms-title").value.trim() || "Майлстоун", date, color:on ? on.dataset.msc : "violet"};
+  hidePop(); await saveMs(nm);
+  if(isNew) toast(`Майлстоун «${nm.title}» — ${short(dn(date))}`);
+});
+pop.addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.tagName==="INPUT"){ e.preventDefault(); pop.querySelector('[data-mp="save"]').click(); } if(e.key==="Escape") hidePop(); });
+document.addEventListener("pointerdown", e=>{ if(!pop.hidden && !pop.contains(e.target) && !e.target.closest(".ms-add,.ms-row")) hidePop(); }, true);
+function saveMsLocal(){ ls("gantt.ms", JSON.stringify([...S.ms.values()])); }
+async function saveMs(m){
+  S.ms.set(m.id, m); render();
+  if(S.mcol){ try{ await S.mcol.doc(m.id).set({title:m.title, date:m.date, color:m.color}); }catch(e){ toast(e && e.code==="permission_denied" ? "Нет прав на изменение плана." : "Не удалось сохранить майлстоун. Проверьте соединение."); } }
+  else saveMsLocal();
+}
+// click on strip = new milestone at that date; drag flag = move
+let msd = null;
+board.addEventListener("pointerdown", e=>{
+  const f = e.target.closest(".msf");
+  if(f){ msd = {id:f.dataset.ms, f, x0:e.clientX, l0:parseFloat(f.style.left), moved:false, days:0, line:board.querySelector(`.msl[data-ms="${f.dataset.ms}"]`)}; f.setPointerCapture(e.pointerId); e.preventDefault(); e.stopPropagation(); return; }
+  const row = e.target.closest(".ms-row");
+  if(row && e.button===0){
+    const r = row.getBoundingClientRect(); const day = S.range.lo + Math.floor((e.clientX - r.left)/S.dw);
+    openMs(null, day, {getBoundingClientRect:()=>({left:e.clientX-20, bottom:r.bottom})}); e.preventDefault();
+  }
+}, true);
+board.addEventListener("pointermove", e=>{
+  if(!msd) return; const dx = e.clientX - msd.x0; if(Math.abs(dx)>3) msd.moved = true; if(!msd.moved) return;
+  msd.days = Math.round(dx/S.dw); const nl = msd.l0 + msd.days*S.dw;
+  msd.f.style.left = nl+"px"; if(msd.line) msd.line.style.left = (nl-0.75)+"px";
+  const m = S.ms.get(msd.id); if(m){ tip.textContent = `${m.title} · ${short(dn(m.date)+msd.days)}`; tip.style.left = (e.clientX+12)+"px"; tip.style.top = (e.clientY+16)+"px"; tip.hidden = false; }
+}, true);
+board.addEventListener("pointerup", e=>{
+  if(!msd) return; const d = msd; msd = null; tip.hidden = true;
+  const m = S.ms.get(d.id); if(!m) return;
+  if(!d.moved){ openMs(m.id, null, d.f); return; }
+  if(d.days) saveMs(Object.assign({}, m, {date:ds(dn(m.date)+d.days)})); else render();
+}, true);
+
+/* long-press reorder / reparent */
+function fitParent(parent, it){
+  if(!parent) return it.type==="epic" ? {type:"epic", label:it.label||""} : null;
+  if(it.type==="epic") return null;
+  return fitFor(parent, it);
+}
+let ldTimer = null, ldStart = null, dropEl = null, ghostEl = null, ldScroll = null;
+function ldCancel(){ clearTimeout(ldTimer); ldTimer = null; ldStart = null; }
+board.addEventListener("pointerdown", e=>{
+  if(e.button!==0 || S.drag) return;
+  const cl = e.target.closest(".cl"); if(!cl || e.target.closest(".caret,.pick,.add,.split")) return;
+  const row = cl.closest(".row"); if(!row || !S.items.has(row.dataset.id)) return;
+  ldStart = {id:row.dataset.id, x:e.clientX, y:e.clientY, pid:e.pointerId, cl};
+  clearTimeout(ldTimer); ldTimer = setTimeout(()=>ldBegin(), 350);
+});
+function ldBegin(){
+  const st = ldStart; ldTimer = null; if(!st) return;
+  const vis = flatten().map(r=>r.it.id);
+  let ids = (S.sel.has(st.id) && S.sel.size>1) ? roots([...S.sel]) : [st.id];
+  ids.sort((a,b)=>vis.indexOf(a)-vis.indexOf(b));
+  const blocked = new Set(); ids.forEach(i=>{ blocked.add(i); descendants(i).forEach(d=>blocked.add(d.id)); });
+  S.ld = {ids, blocked, y:st.y, x:st.x, target:null};
+  try{ st.cl.setPointerCapture(st.pid); }catch(e){}
+  document.body.classList.add("ldrag");
+  ids.forEach(i=>{ const r = board.querySelector(`.row[data-id="${i}"]`); if(r) r.classList.add("lifted"); });
+  const first = S.items.get(ids[0]);
+  ghostEl = document.createElement("div"); ghostEl.className = "ghost";
+  ghostEl.innerHTML = `${esc(kindOf(first))} · ${esc(first.title)}${ids.length>1?`<small>+ ещё ${ids.length-1}</small>`:""}`;
+  document.body.appendChild(ghostEl);
+  dropEl = document.createElement("div"); dropEl.className = "dropline"; dropEl.hidden = true; document.body.appendChild(dropEl);
+  if(navigator.vibrate){ try{ navigator.vibrate(15); }catch(e){} }
+  ldMove(st.x, st.y);
+  ldScroll = setInterval(()=>{
+    if(!S.ld) return; const r = scroller.getBoundingClientRect(); const topEdge = r.top + 78 + 30, botEdge = r.bottom - 30;
+    let dy = 0; if(S.ld.y < topEdge) dy = -Math.ceil((topEdge - S.ld.y)/4); else if(S.ld.y > botEdge) dy = Math.ceil((S.ld.y - botEdge)/4);
+    if(dy){ scroller.scrollTop += Math.max(-24, Math.min(24, dy)); ldMove(S.ld.x, S.ld.y); }
+  }, 30);
+}
+function ldTargetAt(y){
+  const L = S.ld; const rows = [...board.querySelectorAll(".row")];
+  for(const r of rows){
+    const rc = r.getBoundingClientRect(); if(y < rc.top || y >= rc.bottom) continue;
+    const t = S.items.get(r.dataset.id); if(!t || L.blocked.has(t.id)) return null;
+    const movers = L.ids.map(i=>S.items.get(i)).filter(Boolean);
+    const okIn = movers.some(m=>fitParent(t, m));
+    const sibParent = t.parent ? S.items.get(t.parent) : null;
+    const okSib = movers.some(m=>fitParent(sibParent, m));
+    const rel = (y - rc.top)/rc.height;
+    let op = rel<0.3 ? "before" : rel>0.7 ? "after" : "inside";
+    if(op==="inside" && !okIn) op = okSib ? (rel<0.5?"before":"after") : null;
+    else if(op!=="inside" && !okSib) op = okIn ? "inside" : null;
+    return op ? {op, t, row:r, rc} : null;
+  }
+  return null;
+}
+function ldMove(x, y){
+  const L = S.ld; L.x = x; L.y = y;
+  ghostEl.style.left = (x+14)+"px"; ghostEl.style.top = (y+10)+"px";
+  board.querySelectorAll(".row.drop").forEach(r=>r.classList.remove("drop"));
+  const T = L.target = ldTargetAt(y);
+  if(!T){ dropEl.hidden = true; ghostEl.style.borderColor = "var(--st-blocked)"; return; }
+  ghostEl.style.borderColor = "";
+  if(T.op==="inside"){ dropEl.hidden = true; T.row.classList.add("drop"); return; }
+  const cl = T.row.querySelector(".cl"); const cr = cl.getBoundingClientRect();
+  const pad = parseFloat(cl.style.paddingLeft)||8;
+  dropEl.style.left = (cr.left + pad + 22)+"px"; dropEl.style.width = Math.max(40, cr.width - pad - 30)+"px";
+  dropEl.style.top = ((T.op==="before" ? T.rc.top : T.rc.bottom) - 1)+"px"; dropEl.hidden = false;
+}
+window.addEventListener("pointermove", e=>{
+  if(S.ld){ ldMove(e.clientX, e.clientY); return; }
+  if(ldStart && Math.hypot(e.clientX-ldStart.x, e.clientY-ldStart.y) > 6) ldCancel();
+});
+async function ldEnd(commit){
+  const L = S.ld; ldCancel(); if(!L) return;
+  S.ld = null; clearInterval(ldScroll);
+  document.body.classList.remove("ldrag");
+  if(ghostEl){ ghostEl.remove(); ghostEl = null; } if(dropEl){ dropEl.remove(); dropEl = null; }
+  S.noClick = true; setTimeout(()=>{ S.noClick = false; }, 50);
+  const T = L.target;
+  if(!commit || !T){ render(); return; }
+  const newParentId = T.op==="inside" ? T.t.id : (T.t.parent||null);
+  const np = newParentId ? S.items.get(newParentId) : null;
+  const movers = L.ids.map(i=>S.items.get(i)).filter(Boolean).map(m=>({m, f:fitParent(np, m)}));
+  const ok = movers.filter(x=>x.f), skipped = movers.length - ok.length;
+  if(!ok.length){ render(); toast("Сюда эти пункты не переносятся."); return; }
+  const moving = new Set(ok.map(x=>x.m.id));
+  const sibs = kids(newParentId).filter(k=>!moving.has(k.id));
+  let idx = T.op==="inside" ? sibs.length : sibs.findIndex(k=>k.id===T.t.id) + (T.op==="after"?1:0);
+  if(idx<0) idx = sibs.length;
+  const seq = [...sibs.slice(0, idx), ...ok.map(x=>Object.assign({}, x.m, {parent:newParentId, type:x.f.type, label:x.f.label})), ...sibs.slice(idx)];
+  const changed = [];
+  seq.forEach((it, i)=>{ const ord = (i+1)*10; const orig = S.items.get(it.id); if(moving.has(it.id) || !orig || orig.order!==ord) changed.push(Object.assign({}, it, {order:ord})); });
+  if(T.op==="inside"){ S.collapsed.delete(T.t.id); ls("gantt.collapsed", JSON.stringify([...S.collapsed])); }
+  changed.forEach(c=>S.items.set(c.id, c)); render();
+  await persist(changed);
+  if(skipped) toast(`Перенесено: ${ok.length}, пропущено: ${skipped} — не подходят по уровню`);
+}
+window.addEventListener("pointerup", ()=>{ if(S.ld) ldEnd(true); else ldCancel(); });
+window.addEventListener("pointercancel", ()=>{ if(S.ld) ldEnd(false); else ldCancel(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && S.ld) ldEnd(false); });
+document.addEventListener("click", e=>{ if(S.noClick){ e.stopPropagation(); e.preventDefault(); S.noClick = false; } }, true);
+
+boot();
+})();
+</script>
+
+</body></html>
