@@ -295,6 +295,7 @@ const MONTHS_S = ["янв","фев","мар","апр","май","июн","июл"
 
 const MAIN = "main", MAIN_TITLE = "Роадмап Рососмотра";
 const SHARE_URL = "https://claude.ai/artifact/YWGdv6k8fNCBeKVHpqHyQF";
+const PAGES_URL = "https://zlobniyhren.github.io/zlobniyhren-MagicGantt/";
 const S = {rm:MAIN, rms:new Map(), rcol:null, db:null, unsub:[], rmNew:new Set(), loading:true, ro:false, defaultRm:MAIN, sbColor:false, ms:new Map(), mcol:null, sel:new Set(), clip:[], lastPick:null, items:new Map(), scale:"week", dw:14, leftW:null, collapsed:new Set(), col:null, mode:"loading", drag:null, pending:false, range:null, scrolledToday:false, editId:null, draft:null, downloads:null};
 
 const $ = id => document.getElementById(id);
@@ -472,7 +473,7 @@ function loadRoadmap(id){
   if(id!==MAIN && S.rmsLoaded && !S.rms.has(id) && !S.rmNew.has(id)) id = MAIN;
   S.unsub.forEach(f=>{ try{ f(); }catch(e){} }); S.unsub = [];
   if(S.rm!==id){ S.sel.clear(); S.clip = []; S.scrolledToday = false; }
-  S.rm = id; ls("gantt.rm", id);
+  S.rm = id; if(S.mode!=="snap") ls("gantt.rm", id);
   if(!$("ed").hidden) closeEditor(); hidePop(); hideRm(); hideMenu();
   S.items = new Map(); S.ms = new Map(); renderRm();
   if(S.mode==="db"){
@@ -485,6 +486,9 @@ function loadRoadmap(id){
       if(S.editId && !S.items.has(S.editId) && !S.draft) closeEditor();
     }, err=>{ toast("План не загрузился: "+(err && err.message || "ошибка соединения")); }));
     S.unsub.push(S.mcol.onSnapshot(snap=>{ if(rid!==S.rm) return; S.ms = snapMap(snap); if(S.loading) done(); else render(); }, ()=>{ done(); }));
+  } else if(S.mode==="snap"){
+    S.snap.items.forEach(it=>S.items.set(it.id, it)); S.snap.ms.forEach(m=>S.ms.set(m.id, m));
+    S.loading = false; render();
   } else {
     try{ JSON.parse(ls(lsKey("items"))||"[]").forEach(it=>S.items.set(it.id, it)); }catch(e){}
     try{ JSON.parse(ls(lsKey("ms"))||"[]").forEach(m=>S.ms.set(m.id, m)); }catch(e){}
@@ -513,12 +517,55 @@ async function deleteRm(id){
   renderRm(); toast(`Роадмап «${title}» удалён`);
 }
 
+/* ---------- snapshot links: the whole plan travels in the URL hash, no server needed ---------- */
+const b64u = bytes => { let s = ""; for(let i=0;i<bytes.length;i+=0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i+0x8000)); return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); };
+const unb64u = str => { const s = atob(str.replace(/-/g,"+").replace(/_/g,"/")); const b = new Uint8Array(s.length); for(let i=0;i<s.length;i++) b[i] = s.charCodeAt(i); return b; };
+const pipe = async (bytes, stream) => new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer());
+const fmtSnapDate = d => { const p = String(d).split("-"); return p.length===3 ? `${+p[2]} ${MONTHS_S[+p[1]-1]} ${p[0]}` : d; };
+const slim = o => { const r = {}; for(const k in o){ const v = o[k]; if(v!=="" && v!=null && v!==0) r[k] = v; } return r; };
+async function snapLink(){
+  const data = {t:rmTitle(), d:ds(todayN()), i:[...S.items.values()].map(it=>slim(Object.assign({id:it.id}, clean(it)))), m:[...S.ms.values()].map(slim)};
+  let bytes = new TextEncoder().encode(JSON.stringify(data)), tag = "j";
+  if(window.CompressionStream){ try{ bytes = await pipe(bytes, new CompressionStream("deflate-raw")); tag = "z"; }catch(e){} }
+  const base = S.mode!=="db" && /^https?:$/.test(location.protocol) ? location.origin + location.pathname : PAGES_URL;
+  return base + "#s=" + tag + b64u(bytes);
+}
+async function readSnap(){
+  const m = /^#s=([jz])([\w-]+)$/.exec(location.hash); if(!m) return null;
+  try{
+    let bytes = unb64u(m[2]);
+    if(m[1]==="z") bytes = await pipe(bytes, new DecompressionStream("deflate-raw"));
+    const d = JSON.parse(new TextDecoder().decode(bytes));
+    return {title:String(d.t||"Роадмап"), date:d.d||"", items:(d.i||[]).map(x=>Object.assign({id:x.id}, clean(x))), ms:d.m||[]};
+  }catch(e){ return false; }
+}
+function saveSnapCopy(){
+  const sn = S.snap, id = uid();
+  const rms = (()=>{ try{ return JSON.parse(ls("gantt.roadmaps")||"[]"); }catch(e){ return []; } })();
+  rms.push({id, title:sn.title, order:Date.now()});
+  ls("gantt.roadmaps", JSON.stringify(rms));
+  ls(lsKey("items", id), JSON.stringify(sn.items)); ls(lsKey("ms", id), JSON.stringify(sn.ms));
+  ls("gantt.rm", id);
+  location.replace(location.pathname + location.search);
+}
+window.addEventListener("hashchange", ()=>{ if(/^#s=/.test(location.hash) || S.mode==="snap") location.reload(); });
+
 async function boot(){
   renderLegend(); render();
   let db = null;
   try{ db = window.claude && window.claude.use ? await window.claude.use("db") : null; }catch(e){ db = null; }
   try{ S.downloads = window.claude && window.claude.use ? await window.claude.use("downloads") : null; }catch(e){}
   const saved = ls("gantt.rm");
+  const sn = db ? null : await readSnap();
+  if(sn){
+    S.mode = "snap"; S.snap = sn; S.rms = new Map([["snap", {id:"snap", title:sn.title, order:0}]]);
+    document.body.classList.add("snap"); setRo(true);
+    const n = $("notice");
+    n.innerHTML = `Это снимок роадмапа${sn.date?` на ${esc(fmtSnapDate(sn.date))}`:""}, только просмотр. Изменения автора после отправки ссылки сюда не попадают. <button type="button" class="btn" id="b-snapsave">Сохранить копию себе</button>`;
+    n.hidden = false; $("b-snapsave").addEventListener("click", saveSnapCopy);
+    loadRoadmap("snap"); return;
+  }
+  if(sn===false){ toast("Ссылка повреждена — план из неё не открылся."); }
   if(db){
     S.db = db; S.mode = "db";
     try{ const user = await window.claude.use("user"); if(user){ const can = await user.can("data.write"); if(can===false) setRo(true); } }catch(e){}
@@ -537,7 +584,7 @@ async function boot(){
   } else {
     S.mode = "local";
     try{ JSON.parse(ls("gantt.roadmaps")||"[]").forEach(r=>r && r.id && S.rms.set(r.id, r)); }catch(e){}
-    const n = $("notice"); n.textContent = "Общее хранилище недоступно в этом окне, поэтому изменения сохраняются только в этом браузере. Откройте страницу по ссылке claude.ai, чтобы работать с общим планом."; n.hidden = false;
+    const n = $("notice"); n.textContent = "План хранится только в этом браузере. Чтобы показать его другим, нажмите «Поделиться» — в ссылке будет текущая версия плана."; n.hidden = false;
     loadRoadmap(saved && (saved===MAIN || S.rms.has(saved)) ? saved : MAIN);
   }
 }
@@ -1088,13 +1135,17 @@ function openRmForm(isNew){
     <div class="row2"><button type="button" class="btn primary" data-rp="${isNew?"create":"save"}">${isNew?"Создать":"Сохранить"}</button><button type="button" class="btn" data-rp="cancel">Отмена</button></div>`;
   setTimeout(()=>{ const i = $("rm-name"); if(i){ i.focus(); i.select(); } }, 20);
 }
-function openShare(){
+async function openShare(){
   hidePop(); hideMenu();
   const canDef = S.mode==="db" && !S.ro;
+  let link = ""; try{ link = await snapLink(); }catch(e){}
   rmpop.innerHTML = `<h3>Поделиться роадмапом</h3>
-    <div class="share-url"><input id="share-url" value="${esc(SHARE_URL)}" readonly aria-label="Ссылка"><button type="button" class="btn primary" data-rp="copy">Копировать</button></div>
-    <ol><li>Нажмите <b>Share</b> вверху справа на claude.ai.</li><li>Включите доступ по ссылке (<b>Anyone with the link</b>) — или пригласите людей по почте.</li><li>Отправьте ссылку. Получатели видят все роадмапы и переключаются между ними; менять план могут только те, кому вы дали права на редактирование.</li></ol>
-    ${canDef?`<div class="hint">${S.defaultRm===S.rm?`«${esc(rmTitle())}» открывается по ссылке первым.`:`Сейчас по ссылке первым открывается «${esc(rmTitle(S.defaultRm))}».`}</div>${S.defaultRm!==S.rm?`<div class="row2"><button type="button" class="btn" data-rp="default">Открывать «${esc(rmTitle())}» первым</button></div>`:""}`:""}`;
+    <div class="share-url"><input id="share-url" value="${esc(link)}" readonly aria-label="Ссылка на снимок"><button type="button" class="btn primary" data-rp="copy">Копировать</button></div>
+    <div class="hint">Ссылка открывается у любого человека без входа и регистрации и показывает «${esc(rmTitle())}» таким, какой он сейчас. Если потом поменяете план, отправьте ссылку заново.</div>
+    ${S.mode==="db"?`<h3 style="margin-top:14px">Общий живой план на claude.ai</h3>
+    <div class="share-url"><input id="share-url2" value="${esc(SHARE_URL)}" readonly aria-label="Ссылка на claude.ai"><button type="button" class="btn" data-rp="copy2">Копировать</button></div>
+    <ol><li>Нажмите <b>Share</b> вверху справа на claude.ai.</li><li>Включите доступ по ссылке (<b>Anyone with the link</b>) — или пригласите людей по почте.</li><li>Отправьте ссылку. Получатели видят все роадмапы и переключаются между ними; менять план могут только те, кому вы дали права на редактирование. Нужен вход в claude.ai.</li></ol>
+    ${canDef?`<div class="hint">${S.defaultRm===S.rm?`«${esc(rmTitle())}» открывается по ссылке первым.`:`Сейчас по ссылке первым открывается «${esc(rmTitle(S.defaultRm))}».`}</div>${S.defaultRm!==S.rm?`<div class="row2"><button type="button" class="btn" data-rp="default">Открывать «${esc(rmTitle())}» первым</button></div>`:""}`:""}`:""}`;
   rmpop.hidden = false; placePop(rmpop, $("b-share"));
 }
 $("b-rm").addEventListener("click", ()=>{ rmpop.hidden ? openRmMenu() : hideRm(); });
@@ -1113,7 +1164,7 @@ rmpop.addEventListener("click", async e=>{
       if(!b.classList.contains("armed")){ b.classList.add("armed"); b.textContent = `Удалить «${rmTitle()}» со всем планом?`; return; }
       hideRm(); deleteRm(S.rm); break;
     }
-    case "copy": { const i = $("share-url"); try{ await navigator.clipboard.writeText(i.value); toast("Ссылка скопирована"); }catch(err){ i.select(); toast("Выделил ссылку — скопируйте её (⌘C)."); } break; }
+    case "copy": case "copy2": { const i = $(b.dataset.rp==="copy"?"share-url":"share-url2"); try{ await navigator.clipboard.writeText(i.value); toast("Ссылка скопирована"); }catch(err){ i.select(); toast("Выделил ссылку — скопируйте её (⌘C)."); } break; }
     case "default": {
       try{ await S.db.doc("meta/app").set({defaultRm:S.rm}); S.defaultRm = S.rm; toast(`По ссылке первым откроется «${rmTitle()}»`); openShare(); }
       catch(err){ toast(denied(err) ? "Нет прав менять настройки." : "Не удалось сохранить. Проверьте соединение."); }
