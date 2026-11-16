@@ -1,5 +1,5 @@
 {
-  "exported": "2026-11-14T00:00:00.000Z",
+  "exported": "2026-11-16T00:00:00.000Z",
   "roadmap": "Роадмап 27Q1",
   "items": [
     {
@@ -700,9 +700,9 @@
       "order": 10,
       "owner": "Никита Заремба",
       "parent": "v2e15",
-      "progress": 95,
+      "progress": 100,
       "start": "2026-10-19",
-      "status": "review",
+      "status": "done",
       "title": "Разработка: последний баг",
       "type": "story"
     },
